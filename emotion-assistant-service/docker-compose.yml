@@ -1,0 +1,20 @@
+services:
+  emotion-assistant:
+    build: .
+    image: emotion-voice-assistant:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-3.5-turbo}
+    volumes:
+      # Keep model weights OUT of the image; mount them instead so a new
+      # model version doesn't require a rebuild/redeploy of the image itself.
+      - ./models:/app/models:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

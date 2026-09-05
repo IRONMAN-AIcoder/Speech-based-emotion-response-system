@@ -1,0 +1,24 @@
+1
+Put all files in one project folder
+Download everything from the emotion-assistant-service output (Dockerfile, docker-compose.yml, app.py, emotion_detect.py, emotion_tts.py, requirements.txt, README.md, .env.example, .gitignore) into a single folder on your machine, e.g. emotion-assistant/. Make sure Docker Desktop (or Docker Engine + compose plugin) is installed and running.
+2
+Create your real .env file
+In that folder, copy .env.example to .env: `cp .env.example .env`. Open .env and paste in your real OpenRouter API key from https://openrouter.ai/keys. This file is already in .gitignore so it won't get committed if you push this to git.
+3
+Add your trained model weights
+Create a models/ folder next to the Dockerfile and copy your three files into it, renamed exactly like this (the code expects these names): • emotion_model.keras → from your emotion_model_keras.zip (extract it first) • emotion_tts_gan_conditioner_weights.h5 • emotion_tts_gan_vocoder_weights.h5 If your extracted .keras file has a different name, rename it to match, or edit EMOTION_MODEL_PATH in .env.
+4
+Build the image
+From the project folder, run `docker compose build`. This reads the Dockerfile, installs system packages (ffmpeg, libsndfile1, libportaudio2) and Python dependencies, and copies in app.py/emotion_detect.py/emotion_tts.py. Expect this to take a few minutes the first time — tensorflow-cpu is a large download.
+5
+Start the container
+Run `docker compose up` (add -d to run in the background). Compose reads .env automatically, mounts your models/ folder into the container, and starts the FastAPI server on port 8000. Watch the logs — you should see uvicorn report it's running, and 'Loading model from /app/models/emotion_model.keras...' the first time an endpoint that needs it is called.
+6
+Check it's alive
+In a new terminal, run `curl http://localhost:8000/health` — should return {"status":"ok"} immediately. Then `curl http://localhost:8000/ready` — this actually loads the emotion model, so it'll take longer the first time and will error out here if your model path/shape is wrong, which is the fastest way to catch a bad weights file before testing the full pipeline.
+7
+Test the text-only path first
+Before testing with real audio, sanity-check the LLM + TTS path with: `curl -X POST http://localhost:8000/reply-text-only -F "text=I just got some great news!" -F "emotion=happy"`. This skips speech recognition entirely, so it isolates whether your OpenRouter key and TTS engine are working.
+8
+Test the full audio pipeline
+Record or find a short WAV clip of speech, then run: `curl -X POST http://localhost:8000/chat -F "audio=@sample.wav"`. You'll get back JSON with the transcript, detected emotion, LLM reply, and an audio_url. Fetch the synthesized reply with `curl http://localhost:8000/audio/<filename>.wav -o reply.wav` and play it locally.
