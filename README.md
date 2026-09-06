@@ -160,3 +160,26 @@ can't bind-mount a local `models/` folder like you can with compose) and
 That URL is what you share/use from anywhere — phone, another laptop,
 wherever — since it's a real public HTTPS endpoint, not something tied to
 your machine being on.
+
+## Browser client (mic in, voice out)
+
+The service serves a simple web client at its own root (`/`) — open the
+deployed URL directly in a browser (phone or laptop) and you get a "press the
+orb, say something" interface: it records your mic, sends it to `/chat`,
+shows the transcript + detected emotion, and plays back the synthesized
+reply automatically. The orb's glow color shifts with the detected emotion.
+
+It's served from the same origin as the API on purpose — browsers require a
+secure context (HTTPS, or `localhost`) for microphone access, and hosting it
+here means it automatically satisfies that once deployed on Railway's HTTPS
+domain, with no separate hosting or CORS setup needed.
+
+To test locally: `docker compose up`, then open `http://localhost:8000` in
+your browser (not `curl` — you need an actual browser tab for mic access).
+`http://localhost` counts as a secure context even without HTTPS, so this
+works before you deploy anything.
+
+The "Server settings" field at the bottom of the page is only needed if you
+ever host this HTML file somewhere *other* than this service itself (e.g. a
+separate static host) — point it at the deployed API's full URL. Leave it
+blank when using the built-in `/` route.

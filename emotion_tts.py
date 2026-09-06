@@ -521,8 +521,7 @@ def speak_response(text, emotion='neutral', emotion_model_path=DEFAULT_EMOTION_M
     global _engine
     if _engine is None:
         _engine = EmotionTTSEngine(emotion_model_path=emotion_model_path)
-    _engine.synthesize(text, emotion=emotion, output_path=output_path, play=play)
-    return output_path
+    return _engine.synthesize(text, emotion=emotion, output_path=output_path, play=play)
 
 if __name__ == "__main__":
     import time
